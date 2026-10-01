@@ -6,25 +6,38 @@ import os
 import requests
 
 MODEL_PATH = 'brain_tumor_model.h5'
-MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
+
+# Raw GitHub Release CDN Link (Bypasses 404/Redirect issues)
+MODEL_URL = 'https://media.githubusercontent.com/media/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/main/brain_tumor_model.h5'
+
+# Fallback Release Asset URL
+FALLBACK_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
-# --- MODEL DOWNLOAD LOGIC ---
+def download_file(url):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    res = requests.get(url, headers=headers, stream=True, allow_redirects=True)
+    if res.status_code == 200:
+        with open(MODEL_PATH, 'wb') as f:
+            for chunk in res.iter_content(chunk_size=1024*1024):
+                if chunk:
+                    f.write(chunk)
+        return True
+    return False
+
+# --- DOWNLOAD LOGIC ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading trained model file... Please wait."):
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
-        
-        if response.status_code == 200:
-            with open(MODEL_PATH, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=1024*1024):
-                    if chunk:
-                        f.write(chunk)
+    with st.spinner("Downloading trained model from GitHub... Please wait."):
+        success = download_file(MODEL_URL)
+        if not success:
+            success = download_file(FALLBACK_URL)
+            
+        if success:
             st.success("Model downloaded successfully!")
             st.rerun()
         else:
-            st.error(f"Failed to download model. Status code: {response.status_code}")
+            st.error("Failed to download model from GitHub. Please verify the file is committed to GitHub.")
 
 # Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
