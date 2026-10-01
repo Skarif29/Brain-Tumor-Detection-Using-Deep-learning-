@@ -6,26 +6,46 @@ import os
 import requests
 
 MODEL_PATH = 'brain_tumor_model.h5'
-# GitHub Release-er exact correct URL (small letters-e)
-MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
-# --- GITHUB RELEASES THEKE MODEL DOWNLOAD ---
+# --- DYNAMIC GITHUB API MODEL DOWNLOAD ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading trained model from GitHub Releases... Please wait."):
+    with st.spinner("Fetching model from GitHub Releases... Please wait."):
+        api_url = "https://api.github.com/repos/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/latest"
         headers = {'User-Agent': 'Mozilla/5.0'}
-        response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
         
-        if response.status_code == 200:
-            with open(MODEL_PATH, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=1024*1024):  # 1MB Chunks
-                    if chunk:
-                        f.write(chunk)
-            st.success("Model downloaded successfully!")
-            st.rerun()
-        else:
-            st.error(f"Failed to download model. Status code: {response.status_code}")
+        try:
+            # 1. Release API call
+            rel_res = requests.get(api_url, headers=headers)
+            if rel_res.status_code == 200:
+                assets = rel_res.json().get('assets', [])
+                download_url = None
+                
+                # Search for .h5 file in release assets
+                for asset in assets:
+                    if asset['name'].endswith('.h5'):
+                        download_url = asset['browser_download_url']
+                        break
+                
+                if download_url:
+                    # 2. Stream download model file
+                    dl_res = requests.get(download_url, headers=headers, stream=True, allow_redirects=True)
+                    if dl_res.status_code == 200:
+                        with open(MODEL_PATH, 'wb') as f:
+                            for chunk in dl_res.iter_content(chunk_size=1024*1024):
+                                if chunk:
+                                    f.write(chunk)
+                        st.success("Model downloaded successfully!")
+                        st.rerun()
+                    else:
+                        st.error(f"Failed binary download. Status code: {dl_res.status_code}")
+                else:
+                    st.error("No .h5 model file found in GitHub Release assets.")
+            else:
+                st.error(f"Failed to fetch GitHub Release info. API Status code: {rel_res.status_code}")
+        except Exception as e:
+            st.error(f"Download exception error: {e}")
 
 # Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
@@ -34,7 +54,7 @@ class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
 def load_model_dynamically():
     if os.path.exists(MODEL_PATH):
         return tf.keras.models.load_model(MODEL_PATH)
-    raise FileNotFoundError("Model file missing or corrupted during download.")
+    raise FileNotFoundError("Model file missing or failed to download.")
 
 try:
     if os.path.exists(MODEL_PATH):
