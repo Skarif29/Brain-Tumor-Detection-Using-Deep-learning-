@@ -12,7 +12,7 @@ st.title("Brain Tumor Detection App")
 # --- GITHUB RELEASES API AUTOMATIC DETECT & DOWNLOAD ---
 if not os.path.exists(MODEL_PATH):
     with st.spinner("Fetching trained model from GitHub Releases... Please wait."):
-        api_url = "https://api.github.com/repos/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases"
+        api_url = "https://api.github.com/repos/Skarif29/Brain-Tumor-Detection-Using-Deep-Learning/releases"
         headers = {'User-Agent': 'Mozilla/5.0'}
         
         try:
