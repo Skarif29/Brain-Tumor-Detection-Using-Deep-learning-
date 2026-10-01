@@ -5,15 +5,15 @@ import numpy as np
 import os
 import requests
 
-MODEL_PATH = 'Brain_tumor_model.h5'
-# GitHub Release Direct Download URL
-MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
+MODEL_PATH = 'brain_tumor_model.h5'
+# GitHub Release-er exact correct URL (small letters-e)
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
-# --- MODEL DOWNLOAD LOGIC ---
+# --- GITHUB RELEASES THEKE MODEL DOWNLOAD ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading 122MB model file from GitHub Releases... Please wait."):
+    with st.spinner("Downloading trained model from GitHub Releases... Please wait."):
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
         
@@ -25,7 +25,7 @@ if not os.path.exists(MODEL_PATH):
             st.success("Model downloaded successfully!")
             st.rerun()
         else:
-            st.error(f"Failed to download model. Status code: {response.status_code}. Please check GitHub Release link.")
+            st.error(f"Failed to download model. Status code: {response.status_code}")
 
 # Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
@@ -54,10 +54,7 @@ if uploaded_file is not None:
     img = image.resize((128, 128))
     
     # 3. Preprocessing array
-    img_array = np.array(img, dtype=np.float32)
-    
-    # Range Normalization
-    img_array = img_array / 255.0
+    img_array = np.array(img, dtype=np.float32) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     
     if st.button("Predict"):
@@ -65,7 +62,6 @@ if uploaded_file is not None:
             with st.spinner("Classifying..."):
                 prediction = model.predict(img_array)
                 
-                # Predict scores calculate
                 scores = prediction[0]
                 predicted_class_idx = np.argmax(scores)
                 predicted_label = class_names[predicted_class_idx]
@@ -75,7 +71,6 @@ if uploaded_file is not None:
                 st.subheader(f"Prediction: **{predicted_label}**")
                 st.info(f"Confidence: **{confidence:.2f}%**")
                 
-                # Sub-level class breakdown table
                 st.write("### All Class Probabilities:")
                 for name, prob in zip(class_names, scores):
                     st.write(f"- **{name}**: {prob * 100:.2f}%")
