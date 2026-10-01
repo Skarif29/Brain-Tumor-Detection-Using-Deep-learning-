@@ -3,35 +3,38 @@ import tensorflow as tf
 from PIL import Image
 import numpy as np
 import os
-import urllib.request
+import requests
 
-MODEL_PATH = 'brain_tumor_model.h5'
+MODEL_PATH = 'Brain_tumor_model.h5'
 
-# GitHub Releases Direct Asset URL
-MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
+# URL-e file-er exact naam (Capital B) use kora hoyeche
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
-# --- MODEL DOWNLOAD LOGIC USING URLLIB WITH USER-AGENT ---
+# --- MODEL DOWNLOAD LOGIC ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading 122MB model from GitHub Releases... Please wait."):
+    with st.spinner("Downloading trained model from GitHub Releases... Please wait."):
         try:
-            req = urllib.request.Request(
-                MODEL_URL, 
-                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-            )
-            with urllib.request.urlopen(req) as response, open(MODEL_PATH, 'wb') as out_file:
-                # 1MB Chunks-e write
-                while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    out_file.write(chunk)
-                    
-            st.success("Model downloaded successfully!")
-            st.rerun()
+            session = requests.Session()
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
+            }
+            
+            response = session.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
+            
+            if response.status_code == 200:
+                with open(MODEL_PATH, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=1024*1024):
+                        if chunk:
+                            f.write(chunk)
+                st.success("Model downloaded successfully!")
+                st.rerun()
+            else:
+                st.error(f"Download failed with status code: {response.status_code}")
         except Exception as e:
-            st.error(f"Download failed with error: {e}")
+            st.error(f"Download failed with exception: {e}")
 
 # Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
