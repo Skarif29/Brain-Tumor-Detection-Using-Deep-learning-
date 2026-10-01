@@ -1,41 +1,45 @@
 import streamlit as st
 import tensorflow as tf
-from PIL import Image, ImageOps
+from PIL import Image
 import numpy as np
 import os
 import requests
 
 MODEL_PATH = 'Brain_tumor_model.h5'
+# GitHub Release Direct Download URL
 MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
 
+st.title("Brain Tumor Detection App")
+
+# --- MODEL DOWNLOAD LOGIC ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading model file from GitHub Releases... Please wait."):
-        response = requests.get(MODEL_URL, stream=True)
+    with st.spinner("Downloading 122MB model file from GitHub Releases... Please wait."):
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
+        
         if response.status_code == 200:
             with open(MODEL_PATH, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
+                for chunk in response.iter_content(chunk_size=1024*1024):  # 1MB Chunks
                     if chunk:
                         f.write(chunk)
             st.success("Model downloaded successfully!")
+            st.rerun()
         else:
-            st.error(f"Failed to download model. Status code: {response.status_code}")
-st.title("Brain Tumor Detection App")
+            st.error(f"Failed to download model. Status code: {response.status_code}. Please check GitHub Release link.")
 
 # Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
 
 @st.cache_resource
 def load_model_dynamically():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    for file in os.listdir(current_dir):
-        if file.startswith("brain_tumor_model") or file.endswith(".h5"):
-            full_path = os.path.join(current_dir, file)
-            return tf.keras.models.load_model(full_path)
-    raise FileNotFoundError("No .h5 model file found.")
+    if os.path.exists(MODEL_PATH):
+        return tf.keras.models.load_model(MODEL_PATH)
+    raise FileNotFoundError("Model file missing or corrupted during download.")
 
 try:
-    model = load_model_dynamically()
-    st.success("Model Loaded Successfully!")
+    if os.path.exists(MODEL_PATH):
+        model = load_model_dynamically()
+        st.success("Model Loaded Successfully!")
 except Exception as e:
     st.error(f"Error loading model: {e}")
 
@@ -52,25 +56,28 @@ if uploaded_file is not None:
     # 3. Preprocessing array
     img_array = np.array(img, dtype=np.float32)
     
-    # Range Normalization (Jodi 0-1 scale target thake)
+    # Range Normalization
     img_array = img_array / 255.0
     img_array = np.expand_dims(img_array, axis=0)
     
     if st.button("Predict"):
-        with st.spinner("Classifying..."):
-            prediction = model.predict(img_array)
-            
-            # Predict scores calculate
-            scores = prediction[0]
-            predicted_class_idx = np.argmax(scores)
-            predicted_label = class_names[predicted_class_idx]
-            confidence = float(scores[predicted_class_idx]) * 100
-            
-            st.write("---")
-            st.subheader(f"Prediction: **{predicted_label}**")
-            st.info(f"Confidence: **{confidence:.2f}%**")
-            
-            # Sub-level class breakdown table
-            st.write("### All Class Probabilities:")
-            for name, prob in zip(class_names, scores):
-                st.write(f"- **{name}**: {prob * 100:.2f}%")
+        if 'model' in locals():
+            with st.spinner("Classifying..."):
+                prediction = model.predict(img_array)
+                
+                # Predict scores calculate
+                scores = prediction[0]
+                predicted_class_idx = np.argmax(scores)
+                predicted_label = class_names[predicted_class_idx]
+                confidence = float(scores[predicted_class_idx]) * 100
+                
+                st.write("---")
+                st.subheader(f"Prediction: **{predicted_label}**")
+                st.info(f"Confidence: **{confidence:.2f}%**")
+                
+                # Sub-level class breakdown table
+                st.write("### All Class Probabilities:")
+                for name, prob in zip(class_names, scores):
+                    st.write(f"- **{name}**: {prob * 100:.2f}%")
+        else:
+            st.error("Model is not loaded properly. Cannot run prediction.")
