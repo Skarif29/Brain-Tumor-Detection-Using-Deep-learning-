@@ -6,7 +6,7 @@ import os
 import requests
 
 MODEL_PATH = 'brain_tumor_model.h5'
-MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
