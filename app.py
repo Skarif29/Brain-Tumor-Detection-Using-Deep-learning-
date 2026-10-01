@@ -6,13 +6,13 @@ import os
 import requests
 
 MODEL_PATH = 'brain_tumor_model.h5'
-# GitHub Release direct URL
-MODEL_URL = sha256:840c33d1bd6959c97a4f23c4f726ed691a25ef40019d29616d153ef42527298e
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/brain_tumor_model.h5'
+
 st.title("Brain Tumor Detection App")
 
-# --- DIRECT MODEL DOWNLOAD LOGIC ---
+# --- MODEL DOWNLOAD LOGIC ---
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Downloading trained model from GitHub Releases... Please wait."):
+    with st.spinner("Downloading trained model file... Please wait."):
         headers = {'User-Agent': 'Mozilla/5.0'}
         response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
         
