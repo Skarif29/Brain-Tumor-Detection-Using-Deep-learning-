@@ -9,46 +9,40 @@ MODEL_PATH = 'Brain_tumor_model.h5'
 
 st.title("Brain Tumor Detection App")
 
-# --- GITHUB RELEASES API AUTOMATIC DETECT & DOWNLOAD ---
+# --- DIRECT GITHUB RELEASES DOWNLOAD WITH CORRECT REPO NAME ---
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
+
 if not os.path.exists(MODEL_PATH):
-    with st.spinner("Fetching trained model from GitHub Releases... Please wait."):
-        api_url = "https://api.github.com/repos/Skarif29/Brain-Tumor-Detection-Using-Deep-Learning/releases"
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        
+    with st.spinner("Downloading 122MB trained model file... Please wait."):
         try:
-            res = requests.get(api_url, headers=headers)
-            if res.status_code == 200:
-                releases = res.json()
-                download_url = None
-                
-                # Iterate through releases to find .h5 file
-                for rel in releases:
-                    for asset in rel.get('assets', []):
-                        if asset['name'].lower().endswith('.h5'):
-                            download_url = asset['browser_download_url']
-                            break
-                    if download_url:
-                        break
-                
-                if download_url:
-                    dl_res = requests.get(download_url, headers=headers, stream=True, allow_redirects=True)
-                    if dl_res.status_code == 200:
-                        with open(MODEL_PATH, 'wb') as f:
-                            for chunk in dl_res.iter_content(chunk_size=1024*1024):
-                                if chunk:
-                                    f.write(chunk)
-                        st.success("Model downloaded successfully!")
-                        st.rerun()
-                    else:
-                        st.error(f"Failed binary stream. Status code: {dl_res.status_code}")
-                else:
-                    st.error("No .h5 file asset found in any GitHub Release.")
+            # Streams file safely through redirects
+            headers = {'User-Agent': 'Mozilla/5.0'}
+            response = requests.get(MODEL_URL, headers=headers, stream=True, allow_redirects=True)
+            
+            if response.status_code == 200:
+                with open(MODEL_PATH, 'wb') as f:
+                    for chunk in response.iter_content(chunk_size=1024*1024):
+                        if chunk:
+                            f.write(chunk)
+                st.success("Model downloaded successfully!")
+                st.rerun()
             else:
-                st.error(f"GitHub API Error. Status code: {res.status_code}")
+                # Alternative backup link attempt if release redirect block occurs
+                backup_url = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
+                res_backup = requests.get(backup_url, headers=headers, stream=True)
+                if res_backup.status_code == 200:
+                    with open(MODEL_PATH, 'wb') as f:
+                        for chunk in res_backup.iter_content(chunk_size=1024*1024):
+                            if chunk:
+                                f.write(chunk)
+                    st.success("Model downloaded successfully!")
+                    st.rerun()
+                else:
+                    st.error(f"Download failed. Status code: {response.status_code}. Please verify release is Published.")
         except Exception as e:
             st.error(f"Download Exception: {e}")
 
-# Class labels
+# Dataset-er alphabetical class labels
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
 
 @st.cache_resource
