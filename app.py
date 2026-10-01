@@ -3,15 +3,22 @@ import tensorflow as tf
 from PIL import Image, ImageOps
 import numpy as np
 import os
-import urllib.request
+import requests
+
 MODEL_PATH = 'Brain_tumor_model.h5'
-MODEL_URL = 'https://github.com/skarif2918/Brain-Tumor-Detection-Using-Deep-Learning/releases/download/v1.0/Brain_tumor_model.h5'
+MODEL_URL = 'https://github.com/Skarif29/Brain-Tumor-Detection-Using-Deep-learning/releases/download/v1.0/Brain_tumor_model.h5'
 
 if not os.path.exists(MODEL_PATH):
-    st.info("Downloading trained modelfile from GitHub Release...")
-    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
-    st.success("Model downloaded successfully!")
-
+    with st.spinner("Downloading model file from GitHub Releases... Please wait."):
+        response = requests.get(MODEL_URL, stream=True)
+        if response.status_code == 200:
+            with open(MODEL_PATH, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            st.success("Model downloaded successfully!")
+        else:
+            st.error(f"Failed to download model. Status code: {response.status_code}")
 st.title("Brain Tumor Detection App")
 
 # Dataset-er alphabetical class labels
