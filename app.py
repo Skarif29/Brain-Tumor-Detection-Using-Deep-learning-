@@ -1,8 +1,16 @@
 import streamlit as st
 import tensorflow as tf
-from PIL import Image
+from PIL import Image, ImageOps
 import numpy as np
 import os
+import urllib.request
+MODEL_PATH = 'Brain_tumor_model.h5'
+MODEL_URL = 'https://github.com/skarif2918/Brain-Tumor-Detection-Using-Deep-Learning/releases/download/v1.0/Brain_tumor_model.h5'
+
+if not os.path.exists(MODEL_PATH):
+    st.info("Downloading trained modelfile from GitHub Release...")
+    urllib.request.urlretrieve(MODEL_URL, MODEL_PATH)
+    st.success("Model downloaded successfully!")
 
 st.title("Brain Tumor Detection App")
 
